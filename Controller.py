@@ -19,7 +19,7 @@ class Controller:
         # Options for view
         self.open_in_excel = True
         self.show_autofilter = False
-        text = f'{__name__}: Controller initiiert.'
+        text = f'{__name__}: Controller wurde initiiert.'
         print("*" * len(text))
         print(text)
         return
@@ -87,4 +87,3 @@ if __name__ == '__main__':
     root.mainloop()
     for var in vars(c):
         print(f'{var:_<40}{repr(vars(c)[var])}')
-

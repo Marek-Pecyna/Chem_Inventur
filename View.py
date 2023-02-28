@@ -17,7 +17,8 @@ class View(tk.Frame):
         # data instances
         self.primary_key = None
 
-        self.category_label_variable = tk.StringVar()
+        self.current_category_variable = tk.StringVar()
+        self.actual_value_of_category_variable = tk.StringVar()
         self.actual_key = None
         self.key_value_list = []
         self.fieldnames = []
@@ -32,65 +33,39 @@ class View(tk.Frame):
 
         # Build GUI and fill with data
         self.__build_gui()
-        # self.resizable(width=True, height=False)
-        # self.__fill_gui_with_data(data_reader)
         return
 
     def __build_gui(self):
         row = 0
-        # self.columnconfigure(0, weight=1)
-        # Display of Primary Key
-        label_widget = ttk.Label(
-            text='Kategorie auswählen',
-            foreground='blue',
-            state=tk.NORMAL)
-        name_frame = ttk.LabelFrame(
-            self,
-            relief=tk.GROOVE,
-            labelwidget=label_widget,
-            padding=5)
+
+        label_widget = ttk.Label(text='Kategorie auswählen', foreground='blue')
+        name_frame = ttk.LabelFrame(self, relief=tk.GROOVE, labelwidget=label_widget, padding=5)
         name_frame.grid(row=row, column=0, sticky='news', padx=5, pady=2)
-        self.current_var = tk.StringVar()
-        self.combobox = ttk.Combobox(name_frame, textvariable=self.current_var)
+
+        self.combobox = ttk.Combobox(name_frame, textvariable=self.current_category_variable)
         self.combobox.set('Kategorie auswählen')
         self.combobox['state'] = 'readonly'
         self.combobox.grid(row=0, column=0, sticky='we', columnspan=3)
-        name_frame.columnconfigure(1, weight=1)
 
-        back_button = ttk.Button(name_frame,
-                                 text='\u25C0',
-                                 width=5,
-                                 command=self.previous_key)
+        name_frame.columnconfigure(1, weight=1)
+        back_button = ttk.Button(name_frame, text='\u25C0', width=5, command=self.previous_key)
         back_button.grid(row=1, column=0, sticky='news')
-        name_label = ttk.Label(name_frame,
-                               textvariable=self.category_label_variable,
+        name_label = ttk.Label(name_frame, textvariable=self.actual_value_of_category_variable,
                                relief=tk.GROOVE,
                                anchor='c',
                                font=('Arial', 15))
         name_label.grid(row=1, column=1, sticky="we")
-        forward_button = ttk.Button(name_frame,
-                                    text='\u25B6',
-                                    width=5,
-                                    command=self.next_key)
+        forward_button = ttk.Button(name_frame, text='\u25B6', width=5, command=self.next_key)
         forward_button.grid(row=1, column=2, sticky='news')
         row += 1
 
         # Display of data for one compound
-        label_widget = ttk.Label(
-            text='Bitte machen Sie Ihre Eingaben',
-            foreground='blue',
-            state=tk.NORMAL)
-        self.edit_frame = ttk.LabelFrame(
-            self,
-            relief=tk.GROOVE,
-            labelwidget=label_widget,
-            padding=0)
+        label_widget = ttk.Label(text='Bitte machen Sie Ihre Eingaben', foreground='blue')
+        self.edit_frame = ttk.LabelFrame(self, relief=tk.GROOVE, labelwidget=label_widget)
         self.edit_frame.grid(row=row, column=0, sticky='news', padx=5, pady=2)
         row += 1
 
-        self.save_button = ttk.Button(self,
-                                 text='Speichern',
-                                 style='my1.TButton')
+        self.save_button = ttk.Button(self, text='Speichern', style='my1.TButton')
         self.save_button.grid(row=row, column=0, padx=5, pady=0)
         sg = ttk.Sizegrip(self, style='BW.TSizegrip')
         sg.grid(row=row, column=0, sticky='se')
@@ -106,9 +81,7 @@ class View(tk.Frame):
         elif self.actual_key == 0:
             self.actual_key = len(self.database) - 1  # set to last item
 
-        self.category_label_variable.set(
-            self.key_value_list[self.actual_key])
-        # self.save_fields()
+        self.actual_value_of_category_variable.set(self.key_value_list[self.actual_key])
         self.update_fields()
 
     def next_key(self):
@@ -120,8 +93,7 @@ class View(tk.Frame):
         elif self.actual_key == len(self.database)-1:
             self.actual_key = 0
 
-        self.category_label_variable.set(
-            self.key_value_list[self.actual_key])
+        self.actual_value_of_category_variable.set(self.key_value_list[self.actual_key])
         self.update_fields()
 
     def fill_gui_with_data(self, database, fieldnames, primary_key):
@@ -140,7 +112,7 @@ class View(tk.Frame):
         self.key_value_list = [item for item in self.database]
 
         # Build labels and entry widgets
-        self.category_label_variable.set(self.actual_key)
+        self.actual_value_of_category_variable.set(self.actual_key)
         self.v = tk.IntVar()
         self.label_list = []
         self.entry_list = []
@@ -172,7 +144,7 @@ class View(tk.Frame):
 
     def update_fields(self):
         key_in_database = self.key_value_list[self.actual_key]
-        self.category_label_variable.set(key_in_database)
+        self.actual_value_of_category_variable.set(key_in_database)
         data_entry = self.database[key_in_database].values()
         for index, item in enumerate(data_entry):
             self.textvariable_list[index].set(item)
