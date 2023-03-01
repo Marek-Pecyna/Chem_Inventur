@@ -71,7 +71,6 @@ class View(tk.Frame):
                 self.edit_label_width = len(name)
 
         # Build labels and entry widgets
-        self.v = tk.IntVar()
         self.label_list = []
         self.entry_list = []
         self.textvariable_list = [None for key in fieldnames]

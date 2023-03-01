@@ -3,7 +3,7 @@ import os
 # switch between reading old Excel file and reading from csv file
 excel_is_parsed = True
 
-PATH = r'C:\Users\Nutzer\PycharmProjects\Chemikalien_Inventur_2.0'
+PATH = r'C:\Users\Marek\PycharmProjects\Chemikalien_Inventur_2.0'
 CSVFILE = r'In_Bearbeitung_Inventur.csv'
 DATAFILE = r'Inventur_data'
 
@@ -43,9 +43,9 @@ class Controller:
                                      fieldnames=self.model.fieldnames)
         self.actual_key = 0
         self.update_fields()
-        self.view.save_button['command'] = self.save_data_to_file
         self.view.forward_button['command'] = self.next_key
         self.view.back_button['command'] = self.previous_key
+        self.view.save_button['command'] = self.save_data_to_file
         print(f'{__name__}: GUI ist jetzt konfiguriert für die erste Benutzung.')
         return
 
