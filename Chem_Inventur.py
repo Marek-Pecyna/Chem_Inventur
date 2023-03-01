@@ -78,7 +78,6 @@ if __name__ == '__main__':
 
     controller.set_view(view)  # GUI behaviour is defined by controller
     # controller.update_gui()
-    view.set_controller(controller)
     main_app.mainloop()
 
 

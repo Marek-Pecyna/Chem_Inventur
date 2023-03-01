@@ -1,16 +1,14 @@
 from openpyxl import load_workbook
 import csv
-import os
 
 
 class Model:
     def __init__(self):
-        self.csv_file = None
-        self.primary_key = None
+        self.database = {}
         self.fieldnames = []
-        self.database = {}  # dict of dictionaries
 
-    def read_excel_file(self, filename: str, sheets: list) -> dict:
+    @staticmethod
+    def read_excel_file(filename: str, sheets: list) -> dict:
         """
         From an Excel file (from old stock-taking ("Inventur"))
         list of sheets will be processed
@@ -68,29 +66,26 @@ class Model:
                     db.update({index: row_db})
         return db
 
-    def save_csv_file(self, filename: str, database: dict, dialect=csv.excel):
+    def save_csv_file(self, filename: str, dialect=csv.excel):
         with open(filename, 'w', newline='', encoding='utf-16') as csvfile:
             writer = csv.writer(csvfile, dialect=dialect, delimiter=';')
             writer.writerow(self.fieldnames)
             # writing all lines
-            for key in database:
+            for key in self.database:
                 text = [key]
-                for feature in database[key]:
-                    text.append(database[key][feature])
+                for feature in self.database[key]:
+                    text.append(self.database[key][feature])
                 writer.writerow(text)
         return
 
     def get_data_from_csv_file(self, filename: str, primary_key, dialect=csv.excel):
         print(f'{__name__}: Analyse der CSV-Datei mit den Chemikaliendaten beginnt.')
-        self.csv_file = filename
-        self.primary_key = primary_key
 
         with open(filename, newline='', encoding='utf-16') as csv_file:
             # Create CSV reader
             csv_reader = csv.DictReader(csv_file, delimiter=';', dialect=dialect)
 
             # Extract fieldnames without primary key
-            # self.fieldnames = [name for name in csv_reader.fieldnames if name != self.primary_key]
             self.fieldnames = csv_reader.fieldnames
             print(f'{__name__}: Alle Spaltennamen: {self.fieldnames}')
 
@@ -99,7 +94,7 @@ class Model:
                 tmp = {}
                 for index, key in enumerate(row):
                     # use value as primary key
-                    if key == self.primary_key:
+                    if key == primary_key:
                         prim_key = row[key]
                         # continue
                     tmp.update({key: row[key]})

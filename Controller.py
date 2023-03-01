@@ -3,7 +3,7 @@ import os
 # switch between reading old Excel file and reading from csv file
 excel_is_parsed = True
 
-PATH = r'C:\Users\Marek\PycharmProjects\Chemikalien_Inventur_2.0'
+PATH = r'C:\Users\Nutzer\PycharmProjects\Chemikalien_Inventur_2.0'
 CSVFILE = r'In_Bearbeitung_Inventur.csv'
 DATAFILE = r'Inventur_data'
 
@@ -11,35 +11,79 @@ DATAFILE = r'Inventur_data'
 class Controller:
 
     def __init__(self):
+        text = f'{__name__}: Controller wird initiiert.'
+        print("*" * len(text))
+        print(text)
         self.view = None
         self.model = None
-        self.database = None
+        self.filename = os.path.join(PATH, CSVFILE)
+        print(f'{__name__}: Dateiname der CSV-Datei: {self.filename}')
+        self.primary_key = 'Key'
         self.is_analysis_finished = False
+        self.key_value_list = []
+        self.actual_key = None
+        self.key_value_list = []
 
         # Options for view
         self.open_in_excel = True
         self.show_autofilter = False
-        text = f'{__name__}: Controller wurde initiiert.'
-        print("*" * len(text))
-        print(text)
         return
 
     def set_model(self, model):
         self.model = model
-        # Read CSV file
-        filename = os.path.join(PATH, CSVFILE)
-        print(f'{__name__}: Dateiname der CSV-Datei: {filename}')
-        self.model.get_data_from_csv_file(filename=os.path.join(PATH, CSVFILE), primary_key='Key')
+        self.model.get_data_from_csv_file(filename=self.filename, primary_key=self.primary_key)
 
     def set_view(self, view):
         """ This function prepares the GUI in a useful state for first usage """
         self.view = view
         # Fill data in Viewer
+        # Get a list with all primary keys
+        self.key_value_list = [item for item in self.model.database]
         self.view.fill_gui_with_data(database=self.model.database,
-                                     fieldnames=self.model.fieldnames,
-                                     primary_key=self.model.primary_key)
+                                     fieldnames=self.model.fieldnames)
+        self.actual_key = 0
+        self.update_fields()
         self.view.save_button['command'] = self.save_data_to_file
+        self.view.forward_button['command'] = self.next_key
+        self.view.back_button['command'] = self.previous_key
         print(f'{__name__}: GUI ist jetzt konfiguriert für die erste Benutzung.')
+        return
+
+    def previous_key(self):
+        if self.actual_key is None or self.key_value_list == []:
+            return
+        self.save_fields()
+        if self.actual_key > 0:
+            self.actual_key -= 1
+        elif self.actual_key == 0:
+            self.actual_key = len(self.model.database) - 1  # set to last item
+
+        self.view.actual_value_of_category_variable.set(self.key_value_list[self.actual_key])
+        self.update_fields()
+
+    def next_key(self):
+        if self.actual_key is None or self.key_value_list == []:
+            return
+        # self.save_fields()
+        if self.actual_key < len(self.model.database)-1:
+            self.actual_key += 1
+        elif self.actual_key == len(self.model.database)-1:
+            self.actual_key = 0
+
+        self.view.actual_value_of_category_variable.set(self.key_value_list[self.actual_key])
+        self.update_fields()
+
+    def update_fields(self):
+        key_in_database = self.key_value_list[self.actual_key]
+        self.view.actual_value_of_category_variable.set(key_in_database)
+        data_entry = self.model.database[key_in_database].values()
+        for index, item in enumerate(data_entry):
+            self.view.textvariable_list[index].set(item)
+
+    def save_fields(self):
+        key_in_database = self.key_value_list[self.actual_key]
+        for index, item in enumerate(self.model.database[key_in_database]):
+            self.model.database[key_in_database][item] = self.view.textvariable_list[index].get()
         return
 
     def update_gui(self):
@@ -48,10 +92,10 @@ class Controller:
         return
 
     def save_data_to_file(self):  # TODO: Korrektes Abspeichern!
-        self.view.save_fields()
+        self.save_fields()
         save_filename = self.view.ask_save_filename()
         if save_filename != "":
-            self.model.save_csv_file(save_filename, self.view.database)
+            self.model.save_csv_file(save_filename, self.model.database)
 
 
 if __name__ == '__main__':
