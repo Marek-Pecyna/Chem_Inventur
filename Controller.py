@@ -1,10 +1,8 @@
-import os
 
 # switch between reading old Excel file and reading from csv file
 excel_is_parsed = True
 
-PATH = r'C:\Users\Marek\PycharmProjects\Chemikalien_Inventur_2.0'
-CSVFILE = r'In_Bearbeitung_Inventur.csv'
+CSVFILE = r'C:\Users\Marek\Desktop\In_Bearbeitung_Inventur_02.03.2023.csv'
 DATAFILE = r'Inventur_data'
 
 
@@ -16,13 +14,14 @@ class Controller:
         print(text)
         self.view = None
         self.model = None
-        self.filename = os.path.join(PATH, CSVFILE)
+        self.filename = CSVFILE
         print(f'{__name__}: Dateiname der CSV-Datei: {self.filename}')
         self.primary_key = 'Key'
+        self.category = None
+        self.subcategory = None
         self.is_analysis_finished = False
-        self.key_value_list = []
-        self.actual_key = None
-        self.key_value_list = []
+        self.keys_to_display_list = []
+        self.actual_key = 1
 
         # Options for view
         self.open_in_excel = True
@@ -38,60 +37,103 @@ class Controller:
         self.view = view
         # Fill data in Viewer
         # Get a list with all primary keys
-        self.key_value_list = [item for item in self.model.database]
-        self.view.fill_gui_with_data(database=self.model.database,
-                                     fieldnames=self.model.fieldnames)
-        self.actual_key = 0
-        self.update_fields()
+        self.keys_to_display_list = [item for item in self.model.database]
+        self.view.fill_gui_with_data(fieldnames=self.model.column_names,
+                                     primary_key=self.primary_key,
+                                     extra_category='Alle Chemikalien')
+        self.view.combobox_category.bind('<<ComboboxSelected>>', self.category_changed)
+        self.view.combobox_subcategory.bind('<<ComboboxSelected>>', self.subcategory_changed)
+        self.view.combobox_subcategory['state'] = 'disabled'
         self.view.forward_button['command'] = self.next_key
         self.view.back_button['command'] = self.previous_key
         self.view.save_button['command'] = self.save_data_to_file
+        self.actual_key = 1
+        self.update_fields()
         print(f'{__name__}: GUI ist jetzt konfiguriert für die erste Benutzung.')
         return
 
-    def previous_key(self):
-        if self.actual_key is None or self.key_value_list == []:
-            return
+    def category_changed(self, event):
         self.save_fields()
-        if self.actual_key > 0:
-            self.actual_key -= 1
-        elif self.actual_key == 0:
-            self.actual_key = len(self.model.database) - 1  # set to last item
+        self.category = self.view.combobox_category.get()
+        # find all entries with this category
+        sub_category_list = []
+        for key in self.model.database:
+            for item in self.model.database[key]:
+                if item == self.category:
+                    # filling key_value_list
+                    sub_category_list.append(self.model.database[key][item])
+                    break
+        sub_category_list = sorted(set(sub_category_list))  # keep only unique elements
+        self.view.combobox_subcategory['values'] = sub_category_list
+        if len(sub_category_list) > 1:
+            self.view.current_subcategory_variable.set(sub_category_list[0])
+            self.view.combobox_subcategory['state'] = 'readonly'
+        elif len(sub_category_list) == 1:
+            self.view.current_subcategory_variable.set(sub_category_list[0])
+            self.view.combobox_subcategory['state'] = 'disabled'
+        else:
+            self.view.current_subcategory_variable.set('Keine Unterkategorie')
+        self.subcategory_changed(event=None)
+        return
 
-        self.view.actual_value_of_category_variable.set(self.key_value_list[self.actual_key])
+    def subcategory_changed(self, event):
+        self.save_fields()
+        self.subcategory = self.view.combobox_subcategory.get()
+        if self.subcategory == 'Keine Unterkategorie':
+            self.subcategory = None
+            self.view.combobox_subcategory['state'] = 'disabled'
+            self.view.current_subcategory_variable.set('')
+            self.actual_key = 1
+            self.keys_to_display_list = [item for item in self.model.database]
+            self.update_fields()
+            return
+        # display only chemicals with this sub_category, e.g. Standort=='A2'
+        self.keys_to_display_list = []
+        for key in self.model.database:
+            subcategory = self.model.database[key][self.category]
+            if subcategory == self.subcategory:
+                self.keys_to_display_list.append(key)
+        self.actual_key = self.keys_to_display_list[0]
+        print(self.actual_key, self.keys_to_display_list)
+        self.update_fields()
+        return
+
+    def previous_key(self):
+        self.save_fields()
+        position = self.keys_to_display_list.index(self.actual_key) + 1  # add 1 to get keys from 1-301
+        if position == 1:
+            self.actual_key = self.keys_to_display_list[-1]  # letztes Element der Liste auswählen
+        else:
+            self.actual_key = self.keys_to_display_list[position-2]
         self.update_fields()
 
     def next_key(self):
-        if self.actual_key is None or self.key_value_list == []:
-            return
-        # self.save_fields()
-        if self.actual_key < len(self.model.database)-1:
-            self.actual_key += 1
-        elif self.actual_key == len(self.model.database)-1:
-            self.actual_key = 0
-
-        self.view.actual_value_of_category_variable.set(self.key_value_list[self.actual_key])
+        self.save_fields()
+        position = self.keys_to_display_list.index(self.actual_key) + 1  # add 1 to get keys from 1-301
+        if position == len(self.keys_to_display_list):
+            self.actual_key = self.keys_to_display_list[0]  # erstes Element der Liste auswählen
+        else:
+            self.actual_key = self.keys_to_display_list[position]
         self.update_fields()
 
     def update_fields(self):
-        key_in_database = self.key_value_list[self.actual_key]
-        self.view.actual_value_of_category_variable.set(key_in_database)
-        data_entry = self.model.database[key_in_database].values()
+        if self.subcategory:
+            text = f"{self.model.database[self.actual_key]['Name']}"
+            self.view.actual_value_of_category_variable.set(text)
+        else:
+            self.view.actual_value_of_category_variable.set(self.actual_key)
+        self.view.number_of_chemicals_variable.set(
+            f" Chemikalie {self.keys_to_display_list.index(self.actual_key) + 1} von {len(self.keys_to_display_list)}")
+        data_entry = self.model.database[self.actual_key].values()
         for index, item in enumerate(data_entry):
-            self.view.textvariable_list[index].set(item)
+            self.view.text_variable_list[index].set(item)
 
     def save_fields(self):
-        key_in_database = self.key_value_list[self.actual_key]
-        for index, item in enumerate(self.model.database[key_in_database]):
-            self.model.database[key_in_database][item] = self.view.textvariable_list[index].get()
+        for index, column in enumerate(self.model.column_names):
+            self.model.database[self.actual_key][column] = self.view.text_variable_list[index].get()
         return
 
-    def update_gui(self):
-        """ This function implements all the logic and behaviour of GUI """
-        pass
-        return
-
-    def save_data_to_file(self):  # TODO: Korrektes Abspeichern!
+    def save_data_to_file(self):
         self.save_fields()
         save_filename = self.view.ask_save_filename()
         if save_filename != "":

@@ -5,7 +5,7 @@ import csv
 class Model:
     def __init__(self):
         self.database = {}
-        self.fieldnames = []
+        self.column_names = []
 
     @staticmethod
     def read_excel_file(filename: str, sheets: list) -> dict:
@@ -69,13 +69,14 @@ class Model:
     def save_csv_file(self, filename: str, dialect=csv.excel):
         with open(filename, 'w', newline='', encoding='utf-16') as csvfile:
             writer = csv.writer(csvfile, dialect=dialect, delimiter=';')
-            writer.writerow(self.fieldnames)
+            writer.writerow(self.column_names)
             # writing all lines
             for key in self.database:
-                text = [key]
+                text = []
                 for feature in self.database[key]:
                     text.append(self.database[key][feature])
                 writer.writerow(text)
+        print(f"{__name__}: Datei '{filename}' gespeichert.")
         return
 
     def get_data_from_csv_file(self, filename: str, primary_key, dialect=csv.excel):
@@ -86,8 +87,8 @@ class Model:
             csv_reader = csv.DictReader(csv_file, delimiter=';', dialect=dialect)
 
             # Extract fieldnames without primary key
-            self.fieldnames = csv_reader.fieldnames
-            print(f'{__name__}: Alle Spaltennamen: {self.fieldnames}')
+            self.column_names = csv_reader.fieldnames
+            print(f'{__name__}: Alle Spaltennamen: {self.column_names}')
 
             # Extract data from reader
             for row in csv_reader:
@@ -95,7 +96,7 @@ class Model:
                 for index, key in enumerate(row):
                     # use value as primary key
                     if key == primary_key:
-                        prim_key = row[key]
+                        prim_key = int(row[key])
                         # continue
                     tmp.update({key: row[key]})
                     # Create entry in dictionary
