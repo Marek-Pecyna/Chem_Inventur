@@ -66,18 +66,15 @@ from Model import Model
 from Controller import Controller
 
 if __name__ == '__main__':
-    controller = Controller()
-    model = Model()
-    controller.set_model(model)
-
     main_app = tk.Tk()
     main_app.title(f'{PROGRAM} (Version {VERSION})')
     main_app.minsize(width=400, height=400)
     view = View(parent=main_app)
     view.pack(fill="both", expand=True, padx=10, pady=5)
 
-    controller.set_view(view)  # GUI behaviour is defined by controller
-    # controller.update_gui()
+    model = Model(primary_key='Key')
+
+    controller = Controller(main_app, model, view)
     main_app.mainloop()
 
 

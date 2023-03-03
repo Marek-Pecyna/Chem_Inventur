@@ -2,5 +2,5 @@
 from typing import Final
 
 PROGRAM: Final = "Chemikalien-Inventur"
-VERSION: Final = "0.2"
+VERSION: Final = "0.3cd "
 

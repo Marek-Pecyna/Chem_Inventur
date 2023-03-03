@@ -3,9 +3,12 @@ import csv
 
 
 class Model:
-    def __init__(self):
+    def __init__(self, filename=None, primary_key=None):
         self.database = {}
         self.column_names = []
+        self.primary_key = primary_key
+        if filename:
+            self.get_data_from_csv_file(filename, primary_key)
 
     @staticmethod
     def read_excel_file(filename: str, sheets: list) -> dict:

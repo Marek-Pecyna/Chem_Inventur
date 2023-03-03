@@ -24,18 +24,37 @@ class View(tk.Frame):
         # Style definitions
         s = ttk.Style()
         s.configure('my1.TButton', font=('Arial', 12), foreground='blue')
+        s.configure('my2.TButton', font=('Arial', 12), foreground='red')
         s.configure("BW.TSizegrip", background="blue")
+
+        # Menu
+        self.build_menu_bar(parent)
 
         # Build GUI
         self.__build_gui()
         return
+
+    def build_menu_bar(self, parent):
+        menubar = tk.Menu(parent)
+        parent.configure(menu=menubar)
+
+        # self.menu_list = []
+        self.file_menu = tk.Menu(menubar, tearoff=0)
+        # self.menu_list.append(menu)
+        self.file_menu.add_command(label='Öffnen', underline=1, command=self.ask_open_filename)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label='Beenden', underline=0, command=self.master.destroy)
+        menubar.add_cascade(
+            label='Datei',
+            underline=0,
+            menu=self.file_menu)
 
     def __build_gui(self):
         row = 0
 
         label_widget = ttk.Label(text='Kategorie auswählen', foreground='blue')
         name_frame = ttk.LabelFrame(self, relief=tk.GROOVE, labelwidget=label_widget, padding=5)
-        name_frame.grid(row=row, column=0, sticky='news', padx=5, pady=2)
+        name_frame.grid(row=row, column=0, sticky='news', padx=5, pady=2, columnspan=2)
 
         self.combobox_category = ttk.Combobox(name_frame,
                                               textvariable=self.current_category_variable,
@@ -68,13 +87,19 @@ class View(tk.Frame):
         # Display of data for one compound
         label_widget = ttk.Label(text='Bitte machen Sie Ihre Eingaben', foreground='blue')
         self.edit_frame = ttk.LabelFrame(self, relief=tk.GROOVE, labelwidget=label_widget)
-        self.edit_frame.grid(row=row, column=0, sticky='news', padx=5, pady=2)
+        self.edit_frame.grid(row=row, column=0, sticky='news', padx=5, pady=2, columnspan=2)
         row += 1
 
-        self.save_button = ttk.Button(self, text='Speichern', style='my1.TButton')
+        self.delete_entry_button = ttk.Button(self, text='Eintrag löschen', style='my1.TButton')
+        self.delete_entry_button.grid(row=row, column=0, padx=5, pady=0, sticky="w")
+        self.new_entry_button = ttk.Button(self, text='Neuer Eintrag', style='my1.TButton')
+        self.new_entry_button.grid(row=row, column=1, padx=5, pady=0, sticky="e")
+        row += 1
+
+        self.save_button = ttk.Button(self, text='Speichern', style='my2.TButton')
         self.save_button.grid(row=row, column=0, padx=5, pady=0)
         sg = ttk.Sizegrip(self, style='BW.TSizegrip')
-        sg.grid(row=row, column=0, sticky='se')
+        sg.grid(row=row, column=1, sticky='se')
         self.columnconfigure(0, weight=1)
         return
 
@@ -120,6 +145,10 @@ class View(tk.Frame):
     @staticmethod
     def ask_save_filename():
         return filedialog.asksaveasfilename(title="Daten speichern")
+
+    @staticmethod
+    def ask_open_filename():
+        return filedialog.askopenfilename(title="Daten öffner")
 
 
 if __name__ == '__main__':
