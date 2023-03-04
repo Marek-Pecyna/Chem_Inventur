@@ -188,7 +188,6 @@ class Controller:
         return
 
     def create_new_entry(self):
-        print("Erzeugen eines neuen Eintrags")
         self.save_fields()  # save previous entry
 
         new_data_entry = {}
@@ -196,6 +195,7 @@ class Controller:
             new_data_entry[item] = ''
 
         new_key = len(self.model.database)+1
+        print(f'{__name__}: Erzeugen eines neuen Eintrags #{new_key}')
         new_data_entry[self.model.primary_key] = new_key
 
         today = date.today()
@@ -211,7 +211,13 @@ class Controller:
         self.update_fields()
 
     def delete_entry(self):
-        print("Löschen eines Eintrags")
+        print(f'{__name__}: Löschen des Eintrags #{self.actual_key}')
+        self.model.database.pop(self.actual_key)
+        self.category = None
+        self.subcategory = None
+        self.keys_to_display_list = [item for item in self.model.database]
+        self.actual_key = self.keys_to_display_list[0]
+        self.update_fields()
         pass
 
 
