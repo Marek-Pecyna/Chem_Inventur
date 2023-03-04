@@ -1,6 +1,7 @@
 from Constants import PROGRAM, VERSION
 from datetime import date
 
+
 class Controller:
 
     def __init__(self, parent, model, view):
@@ -8,6 +9,7 @@ class Controller:
         print("*" * len(text))
         print(text)
         self.parent = parent
+        self.parent.protocol("WM_DELETE_WINDOW", self.quit_program)
         self.model = model
         self.view = view
         self.filename = None
@@ -16,14 +18,15 @@ class Controller:
         self.is_analysis_finished = False
         self.keys_to_display_list = []
         self.actual_key = 1
+        self.data_changed = False
+        self.view.build_menu_bar(parent)
         self.view.file_menu.entryconfig(0, command=self.open_csv_file)
-        self.view.file_menu.entryconfig(2, command=self.quit_program)
-
-        # Options for view
+        self.view.file_menu.entryconfig(1, command=self.save_file, state='disabled')
+        self.view.file_menu.entryconfig(2, command=self.save_as_new_file, state='disabled')
+        self.view.file_menu.entryconfig(4, command=self.quit_program)
+        # Options for generated Excel file (will be implemented in future versions)
         self.open_in_excel = True
         self.show_autofilter = False
-        if self.model.database:
-            self.set_view()
         return
 
     def set_model(self, model):
@@ -34,15 +37,23 @@ class Controller:
         # Fill data in Viewer
         # Get a list with all primary keys
         self.keys_to_display_list = [item for item in self.model.database]
+
+        # Build GUI
+        self.view.build_gui()
+
+        self.view.combobox_category['state'] = 'disabled'
+        self.view.combobox_subcategory['state'] = 'disabled'
         self.view.fill_gui_with_data(fieldnames=self.model.column_names,
                                      primary_key=self.model.primary_key,
                                      extra_category='Alle Chemikalien')
         self.view.combobox_category.bind('<<ComboboxSelected>>', self.category_changed)
+        self.view.combobox_category['state'] = 'normal'
         self.view.combobox_subcategory.bind('<<ComboboxSelected>>', self.subcategory_changed)
         self.view.combobox_subcategory['state'] = 'disabled'
+        for entry in self.view.entry_list:
+            entry['validatecommand'] = self.save_fields
         self.view.forward_button['command'] = self.next_key
         self.view.back_button['command'] = self.previous_key
-        self.view.save_button['command'] = self.save_data_to_file
         self.view.new_entry_button['command'] = self.create_new_entry
         self.view.delete_entry_button['command'] = self.delete_entry
         self.actual_key = 1
@@ -128,26 +139,53 @@ class Controller:
 
     def save_fields(self):
         for index, column in enumerate(self.model.column_names):
-            self.model.database[self.actual_key][column] = self.view.text_variable_list[index].get()
+            temp = self.view.text_variable_list[index].get()
+            if temp != self.model.database[self.actual_key][column]:
+                self.data_changed = True
+                self.model.database[self.actual_key][column] = temp
         return
 
-    def save_data_to_file(self):
+    def save_as_new_file(self):
         self.save_fields()
         save_filename = self.view.ask_save_filename()
         if save_filename != "":
             self.model.save_csv_file(save_filename, self.model.database)
+            self.data_changed = False
+        return
+
+    def save_file(self):
+        self.save_fields()
+        if not self.data_changed:
+            return
+        self.model.save_csv_file(self.model.filename, self.model.database)
+        self.data_changed = False
         return
 
     def open_csv_file(self):
+        if self.data_changed:
+            if not self.view.ask_confirm('Ungespeicherte Daten',
+                                         'Daten in Ihrer aktuell geöffneten Datei sind noch nicht gespeichert. '
+                                         'Fortfahren ohne zu speichern?'):
+                return
         csv_filename = self.view.ask_open_filename()
         if csv_filename != "":
             self.model.get_data_from_csv_file(csv_filename, primary_key=self.model.primary_key)
             self.set_view()
+            self.data_changed = False
             self.parent.title(f'{PROGRAM} (Version {VERSION}) {csv_filename}')
+            self.view.file_menu.entryconfig(1, state='normal')
+            self.view.file_menu.entryconfig(2, state='normal')
         return
 
-    def quit_program(self):  # TODO: Test if data are changed
+    def quit_program(self):
+        if self.data_changed:
+            if self.view.ask_confirm('Ungespeicherte Daten',
+                                     'Daten in Ihrer aktuell geöffneten Datei sind noch nicht gespeichert. Trotzdem '
+                                     'beenden?'):
+                self.parent.quit()
+            return
         self.parent.quit()
+        return
 
     def create_new_entry(self):
         print("Erzeugen eines neuen Eintrags")

@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
+from tkinter.messagebox import askokcancel
 
 WIDTH, HEIGHT = 450, 630
 INITIAL_X_POSITION, INITIAL_Y_POSITION = 0, 0
@@ -30,8 +31,6 @@ class View(tk.Frame):
         # Menu
         self.build_menu_bar(parent)
 
-        # Build GUI
-        self.__build_gui()
         return
 
     def build_menu_bar(self, parent):
@@ -42,6 +41,8 @@ class View(tk.Frame):
         self.file_menu = tk.Menu(menubar, tearoff=0)
         # self.menu_list.append(menu)
         self.file_menu.add_command(label='Öffnen', underline=1, command=self.ask_open_filename)
+        self.file_menu.add_command(label='Speichern', underline=1)
+        self.file_menu.add_command(label='Speichern unter...', underline=1)
         self.file_menu.add_separator()
         self.file_menu.add_command(label='Beenden', underline=0, command=self.master.destroy)
         menubar.add_cascade(
@@ -49,7 +50,7 @@ class View(tk.Frame):
             underline=0,
             menu=self.file_menu)
 
-    def __build_gui(self):
+    def build_gui(self):
         row = 0
 
         label_widget = ttk.Label(text='Kategorie auswählen', foreground='blue')
@@ -66,7 +67,6 @@ class View(tk.Frame):
         self.combobox_subcategory = ttk.Combobox(name_frame,
                                                  textvariable=self.current_subcategory_variable,
                                                  font=('Arial', FONT_SIZE))
-        self.combobox_subcategory.set('Unterkategorie auswählen')
         self.combobox_subcategory['state'] = 'readonly'
         self.combobox_subcategory.grid(row=1, column=0, sticky='we', columnspan=3)
         self.number_of_chemicals_label = ttk.Label(name_frame, textvariable=self.number_of_chemicals_variable)
@@ -96,8 +96,6 @@ class View(tk.Frame):
         self.new_entry_button.grid(row=row, column=1, padx=5, pady=0, sticky="e")
         row += 1
 
-        self.save_button = ttk.Button(self, text='Speichern', style='my2.TButton')
-        self.save_button.grid(row=row, column=0, padx=5, pady=0)
         sg = ttk.Sizegrip(self, style='BW.TSizegrip')
         sg.grid(row=row, column=1, sticky='se')
         self.columnconfigure(0, weight=1)
@@ -133,7 +131,9 @@ class View(tk.Frame):
                               textvariable=textvariable,
                               justify='left',
                               width=40,
-                              font=('Arial', FONT_SIZE))
+                              font=('Arial', FONT_SIZE),
+                              validate="focusout",
+                              validatecommand=None)  # 'validatecommand' gets called, when focus is lost
             entry.grid(row=index, column=2, sticky='we', padx=5)
             if key == primary_key:
                 entry['state'] = 'disabled'
@@ -148,7 +148,11 @@ class View(tk.Frame):
 
     @staticmethod
     def ask_open_filename():
-        return filedialog.askopenfilename(title="Daten öffner")
+        return filedialog.askopenfilename(title="CSV-Datei öffnen")
+
+    @staticmethod
+    def ask_confirm(title, message):
+        return askokcancel(title, message)
 
 
 if __name__ == '__main__':

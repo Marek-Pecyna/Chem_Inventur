@@ -68,7 +68,8 @@ from Controller import Controller
 if __name__ == '__main__':
     main_app = tk.Tk()
     main_app.title(f'{PROGRAM} (Version {VERSION})')
-    main_app.minsize(width=400, height=400)
+    main_app.configure(bg='lightblue')
+    main_app.minsize(width=500, height=500)
     view = View(parent=main_app)
     view.pack(fill="both", expand=True, padx=10, pady=5)
 

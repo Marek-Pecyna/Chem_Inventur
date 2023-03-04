@@ -7,6 +7,7 @@ class Model:
         self.database = {}
         self.column_names = []
         self.primary_key = primary_key
+        self.filename = filename
         if filename:
             self.get_data_from_csv_file(filename, primary_key)
 
@@ -84,6 +85,7 @@ class Model:
 
     def get_data_from_csv_file(self, filename: str, primary_key, dialect=csv.excel):
         print(f'{__name__}: Analyse der CSV-Datei mit den Chemikaliendaten beginnt.')
+        self.filename = filename
 
         with open(filename, newline='', encoding='utf-16') as csv_file:
             # Create CSV reader
@@ -104,7 +106,7 @@ class Model:
                     tmp.update({key: row[key]})
                     # Create entry in dictionary
                 # only if 'Name' is empty:
-                if tmp['Name'] == "":
+                if 'Name' in tmp and tmp['Name'] == "":
                     if 'Handelsname' in tmp:
                         tmp['Name'] = tmp['Handelsname']
                     else:
