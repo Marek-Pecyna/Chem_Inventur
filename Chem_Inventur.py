@@ -49,14 +49,14 @@ make a complete standalone app with:
 "pyinstaller .\\Chem-Inventur.spec"
 
 making a one-folder-app with Nuitka
-nuitka --follow-imports --standalone --enable-plugin=tk-inter .\\Chem-Inventur.py
+nuitka --follow-imports --standalone --enable-plugin=tk-inter .\\Chem_Inventur.py
 
 making onefile app with Nuitka:
-nuitka --onefile --enable-plugin=tk-inter .\\Chem-Inventur.py
+nuitka --onefile --enable-plugin=tk-inter .\\Chem_Inventur.py
 
-nuitka --onefile --enable-plugin=tk-inter --include-data-files=.\\*.csv=.\\ .\\Chem-Inventur.py
+nuitka --onefile --enable-plugin=tk-inter .\\Chem_Inventur.py
 
-nuitka --onefile --enable-plugin=tk-inter --include-data-files=.\\*.csv=.\\ --disable-console .\\Chem-Inventur.py
+nuitka --onefile --enable-plugin=tk-inter --disable-console .\\Chem_Inventur.py
 """
 
 import tkinter as tk
@@ -66,14 +66,18 @@ from Model import Model
 from Controller import Controller
 
 if __name__ == '__main__':
+    text = f'{PROGRAM} (Version {VERSION})'
+    print("*" * len(text))
+    print(text)
+    print("*" * len(text))
+    print(f'{__name__}:   {__file__}')
     main_app = tk.Tk()
     main_app.title(f'{PROGRAM} (Version {VERSION})')
+    main_app.minsize(width=500, height=350)
     main_app.configure(bg='lightblue')
-    main_app.minsize(width=500, height=500)
     view = View(parent=main_app)
-    view.pack(fill="both", expand=True, padx=10, pady=5)
 
-    model = Model(primary_key='Key')
+    model = Model()
 
     controller = Controller(main_app, model, view)
     main_app.mainloop()

@@ -3,13 +3,16 @@ import csv
 
 
 class Model:
-    def __init__(self, filename=None, primary_key=None):
+    def __init__(self, filename=None, delimiter=None, primary_key=None):
+        self.filename = filename
+        self.delimiter = delimiter
+        self.primary_key = primary_key
         self.database = {}
         self.column_names = []
-        self.primary_key = primary_key
-        self.filename = filename
         if filename:
             self.get_data_from_csv_file(filename, primary_key)
+        print(f'{__name__}:      Model wurde initialisiert.')
+        return
 
     @staticmethod
     def read_excel_file(filename: str, sheets: list) -> dict:
@@ -71,6 +74,7 @@ class Model:
         return db
 
     def save_csv_file(self, filename: str, dialect=csv.excel):
+        print()
         with open(filename, 'w', newline='', encoding='utf-16') as csvfile:
             writer = csv.writer(csvfile, dialect=dialect, delimiter=';')
             writer.writerow(self.column_names)
@@ -80,28 +84,36 @@ class Model:
                 for feature in self.database[key]:
                     text.append(self.database[key][feature])
                 writer.writerow(text)
-        print(f"{__name__}: Datei '{filename}' gespeichert.")
+        print(f"{__name__}:      Datei '{filename}' gespeichert.\n")
         return
 
-    def get_data_from_csv_file(self, filename: str, primary_key, dialect=csv.excel):
-        print(f'{__name__}: Analyse der CSV-Datei mit den Chemikaliendaten beginnt.')
+    def get_data_from_csv_file(self, filename: str,
+                               delimiter=';',
+                               encoding='utf-16',
+                               primary_key=None, dialect=None):
         self.filename = filename
+        print(f"\n{__name__}:      Analyse CSV-Datei begonnen.")
 
-        with open(filename, newline='', encoding='utf-16') as csv_file:
+        with open(filename, newline='', encoding=encoding) as csv_file:
             # Create CSV reader
-            csv_reader = csv.DictReader(csv_file, delimiter=';', dialect=dialect)
+            csv_reader = csv.DictReader(csv_file, delimiter=delimiter, dialect=dialect)
 
             # Extract fieldnames without primary key
             self.column_names = csv_reader.fieldnames
-            print(f'{__name__}: Alle Spaltennamen: {self.column_names}')
+            print(f'{__name__}:      Spaltennamen: {self.column_names}')
+            if primary_key:
+                self.primary_key = primary_key
+            else:
+                self.primary_key = self.column_names[0]
+            print(f"{__name__}:      Primary key: '{self.primary_key}'")
 
             # Extract data from reader
             for row in csv_reader:
                 tmp = {}
                 for index, key in enumerate(row):
                     # use value as primary key
-                    if key == primary_key:
-                        prim_key = int(row[key])
+                    if key == self.primary_key:
+                        prim_key = row[key]
                         # continue
                     tmp.update({key: row[key]})
                     # Create entry in dictionary
@@ -112,5 +124,5 @@ class Model:
                     else:
                         tmp['Name'] = prim_key
                 self.database.update({prim_key: tmp})
-        print(f'{__name__}: Analyse der CSV-Datei mit den Chemikaliendaten beendet.')
+        print(f"{__name__}:      Analyse beendet.\n")
         return
