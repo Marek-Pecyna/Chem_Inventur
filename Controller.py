@@ -57,7 +57,7 @@ class Controller:
         # Fill Labels and Entries with data in View
         self.view.fill_gui_with_data(fieldnames=self.model.column_names,
                                      primary_key=self.model.primary_key,
-                                     extra_category='Alle Einträge')
+                                     extra_category='Alle Chemikalien')
 
         # Prepare entry-fields callback, if updated
         for entry in self.view.entry_list:
@@ -152,7 +152,7 @@ class Controller:
                 self.view.actual_value_of_subcategory_variable.set(text)
 
         self.view.number_of_subcategories_variable.set(
-            f" Eintrag {self.keys_to_display_list.index(self.actual_key) + 1} von {len(self.keys_to_display_list)}")
+            f"Chemikalie {self.keys_to_display_list.index(self.actual_key) + 1} von {len(self.keys_to_display_list)}")
         data_entry = self.model.database[self.actual_key].values()
         for index, item in enumerate(data_entry):
             self.view.text_variable_list[index].set(item)
@@ -182,18 +182,18 @@ class Controller:
         return
 
     def open_csv_file(self):
-        print(f'{__name__}: Datei öffnen.')
         if self.data_changed:
             if not self.view.ask_confirm('Ungespeicherte Daten',
                                          'Daten in Ihrer aktuell geöffneten Datei sind noch nicht gespeichert. '
                                          'Fortfahren ohne zu speichern?'):
                 return
         csv_filename = self.view.ask_open_filename()
-        print("-filename: ", csv_filename)
-        print("-delimiter:", self.view.chosen_delimiter.get())
-        print("-encoding: ", self.view.chosen_encoding.get())
         if csv_filename != "":
-            if self.model.database:  # if data already present, reset to start conditions
+            print(f'{__name__}: Datei öffnen.')
+            print("-filename: ", csv_filename)
+            print("-delimiter:", self.view.chosen_delimiter.get())
+            print("-encoding: ", self.view.chosen_encoding.get())
+            if self.model.database:  # if data present, reset to start conditions
                 self.category = None
                 self.subcategory = None
                 self.keys_to_display_list = []
