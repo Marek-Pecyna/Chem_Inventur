@@ -5,36 +5,42 @@ import xlsxwriter
 
 
 class Model:
-    def __init__(self, filename=None, delimiter=None, primary_key=None):
+    def __init__(self, filename=None, delimiter=None, encoding=None, primary_key=None, dialect=csv.excel):
         self.filename = filename
         self.delimiter = delimiter
+        self.encoding = encoding
         self.primary_key = primary_key
+        self.dialect = dialect
         self.database = {}
         self.column_names = []
         if filename:
-            self.get_data_from_csv_file(filename, primary_key)
+            self.get_data_from_csv_file(filename=filename,
+                                        delimiter=delimiter,
+                                        encoding=encoding,
+                                        primary_key=primary_key,
+                                        dialect=dialect)
         print(f'{__name__}:      Model wurde initialisiert.')
         return
 
-    @staticmethod
-    def read_excel_file(filename: str, sheets: list) -> dict:
+    def import_excel_file(self, filename: str):
         """
         From an Excel file (from old stock-taking ("Inventur"))
         list of sheets will be processed
-        stored in shelve
-
         :param filename:
-        :param sheets:
-        :return db:
         """
-
+        print(f"\n{__name__}:      Analyse Excel-Datei begonnen.")
+        self.filename = filename
         # Load your workbook and sheets as you want, for example
         wb = load_workbook(filename)
         header = []
         db = {}  # dictionary with all data, keys = consecutive number
+        worksheet_list = []
+        for name in wb.sheetnames:
+            worksheet_list.append(name)
 
-        for sheet in sheets:
+        for sheet in worksheet_list:
             actual_sheet = wb[sheet]
+            print(actual_sheet)
             data = list(actual_sheet.iter_rows(values_only=True))  # read in
             print(f"   \u2022 {len(data)} Einträge mit Header")
 
@@ -47,6 +53,7 @@ class Model:
                         print(f"{entry}", end=",")
                     print()
                 else:
+                    """
                     row_db = {'Name': None,
                               'Alternativer Name 1': None,
                               'Alternativer Name 2': None,
@@ -69,17 +76,24 @@ class Model:
                               'Link GESTIS': None,
                               'Letzte Aktualisierung': None,
                               }
-
+                    """
+                    row_db = {}
                     for position, entry in enumerate(row):
                         # print(header[position])
-                        row_db.update({header[position]: entry})
+                        if entry:
+                            row_db.update({header[position]: entry})
+                        else:
+                            row_db.update({header[position]: ''})
                     db.update({index: row_db})
-        return db
+        self.column_names = header
+        self.database = db
+        print(f"{__name__}:      Analyse beendet.\n")
+        return
 
-    def save_as_csv_file(self, filename: str, dialect=csv.excel):
+    def save_as_csv_file(self, filename: str):
         print()
         with open(filename, 'w', newline='', encoding='utf-16') as csvfile:
-            writer = csv.writer(csvfile, dialect=dialect, delimiter=';')
+            writer = csv.writer(csvfile, dialect=self.dialect, delimiter=self.delimiter)
             writer.writerow(self.column_names)
             # writing all lines
             for key in self.database:
@@ -123,11 +137,15 @@ class Model:
         print(f"{__name__}:      {datetime.now().strftime('%d.%m.%Y %H:%M:%S')} Excel-Datei '{filename}' wurde gespeichert.\n")
         return
 
-    def get_data_from_csv_file(self, filename: str,
+    def get_data_from_csv_file(self,
+                               filename: str,
                                delimiter=';',
                                encoding='utf-16',
-                               primary_key=None, dialect=None):
+                               primary_key=None,
+                               dialect=None):
         self.filename = filename
+        self.delimiter = delimiter
+        self.encoding = encoding
         print(f"\n{__name__}:      Analyse CSV-Datei begonnen.")
 
         with open(filename, newline='', encoding=encoding) as csv_file:
@@ -149,6 +167,7 @@ class Model:
                 for index, key in enumerate(row):
                     # use value as primary key
                     if key == self.primary_key:
+                        # get integer values for primary key if possible:
                         try:
                             prim_key = int(row[key])
                         except ValueError:

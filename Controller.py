@@ -17,13 +17,14 @@ class Controller:
 
         # View specific settings
         self.view.file_menu.entryconfig(0, command=self.open_csv_file)
-        self.view.file_menu.entryconfig(1, command=None, state='disabled')  # import from excel
+        self.view.bind_all("<Control-o>", lambda e: self.open_csv_file())
+        self.view.file_menu.entryconfig(1, command=self.open_excel_file, state='normal')
+        self.view.bind_all("<Control-i>", lambda e: self.open_excel_file())
         self.view.file_menu.entryconfig(2, command=self.save_file, state='disabled')
         self.view.file_menu.entryconfig(3, command=self.save_as_new_file, state='disabled')
         self.view.file_menu.entryconfig(4, command=self.export_as_excel_file, state='disabled')
         self.view.file_menu.entryconfig(6, command=self.quit_program)
         self.parent.protocol("WM_DELETE_WINDOW", self.quit_program)
-        self.view.bind_all("<Control-o>", lambda e: self.open_csv_file())
 
         # Options for generation of Excel file (will be implemented in future versions)
         self.open_in_excel = True
@@ -41,8 +42,8 @@ class Controller:
         self.view.pack(fill="both", expand=True, padx=5, pady=5)
 
         # Update Menubar, 1='Import from Excel', 2='Save', 3='Save as', 4='Export to Excel' with Short-Cuts
-        self.view.file_menu.entryconfig(1, state='disabled')
-        self.view.bind_all("<Control-i>", None)
+        self.view.file_menu.entryconfig(1, state='normal')
+        self.view.bind_all("<Control-i>", lambda e: self.open_excel_file())
         self.view.file_menu.entryconfig(2, state='normal')
         self.view.bind_all("<Control-s>", lambda e: self.save_file())
         self.view.file_menu.entryconfig(3, state='normal')
@@ -176,9 +177,9 @@ class Controller:
                                          'Daten in Ihrer aktuell geöffneten Datei sind noch nicht gespeichert. '
                                          'Fortfahren ohne zu speichern?'):
                 return
-        csv_filename = self.view.ask_open_filename()
+        csv_filename = self.view.ask_open_csv_filename()
         if csv_filename != "":
-            print(f'{__name__}: Datei öffnen.')
+            print(f'{__name__}: CSV-Datei öffnen.')
             print("-filename: ", csv_filename)
             print("-delimiter:", self.view.chosen_delimiter.get())
             print("-encoding: ", self.view.chosen_encoding.get())
@@ -195,6 +196,28 @@ class Controller:
                                               encoding=self.view.chosen_encoding.get())
             self.set_view()
         return
+
+    def open_excel_file(self):
+        if self.data_changed:
+            if not self.view.ask_confirm('Ungespeicherte Daten',
+                                         'Daten in Ihrer aktuell geöffneten Datei sind noch nicht gespeichert. '
+                                         'Fortfahren ohne zu speichern?'):
+                return
+        excel_filename = self.view.ask_open_excel_filename()
+        if excel_filename != "":
+            print(f'{__name__}: Excel-Datei öffnen.')
+            print("-filename: ", excel_filename)
+            if self.model.database:  # if data present, reset to start conditions
+                self.category = None
+                self.subcategory = None
+                self.keys_to_display_list = []
+                self.actual_key = None
+                self.model.database = {}
+                self.model.column_names = []
+                self.view.clear_data()
+            self.model.import_excel_file(filename=excel_filename)
+            self.set_view()
+            return
 
     def save_file(self):
         self.save_fields()

@@ -172,13 +172,14 @@ class View(ttk.Frame):
         self.winfo_toplevel().configure(menu=menubar)
 
         self.file_menu = tk.Menu(menubar, tearoff=0)
-        self.file_menu.add_command(label='Öffnen', accelerator="Strg+O", underline=1, command=self.ask_open_filename)
-        self.file_menu.add_command(label='Importieren aus Excel', accelerator="Strg+I", underline=0, state='disabled')
-        self.file_menu.add_command(label='Speichern', accelerator="Strg+S", underline=0, state='disabled')
+        self.file_menu.add_command(label='Öffnen', accelerator="Strg+O", underline=1,
+                                   command=self.ask_open_csv_filename)
+        self.file_menu.add_command(label='Importieren aus Excel', accelerator="Strg+I", underline=0,
+                                   command=self.ask_open_excel_filename)
+        self.file_menu.add_command(label='Speichern', accelerator="Strg+S", underline=0)
         self.file_menu.add_command(label='Speichern unter...', accelerator="Strg+Alt+S",
-                                   underline=10, command=self.ask_save_as_filename)
-        self.file_menu.add_command(label='Exportieren nach Excel', accelerator="Strg+E",
-                                   underline=0, state='disabled')
+                                   underline=10, command=lambda: self.ask_save_as_filename("Speichern unter"))
+        self.file_menu.add_command(label='Exportieren nach Excel', accelerator="Strg+E", underline=0)
         self.file_menu.add_separator()
         self.file_menu.add_command(label='Beenden', underline=0, command=self.winfo_toplevel().destroy)
         menubar.add_cascade(label='Datei', underline=0, menu=self.file_menu)
@@ -265,9 +266,14 @@ class View(ttk.Frame):
         return filedialog.asksaveasfilename(title=title)
 
     @staticmethod
-    def ask_open_filename():
+    def ask_open_csv_filename():
         return filedialog.askopenfilename(
             title="CSV-Datei öffnen", filetypes=(('CSV-Dateien', '*.csv'), ('Alle Dateien', '*.*')))
+
+    @staticmethod
+    def ask_open_excel_filename():
+        return filedialog.askopenfilename(
+            title="Excel-Datei importieren", filetypes=(('Excel-Dateien', '*.xlsx'), ('Alle Dateien', '*.*')))
 
     @staticmethod
     def ask_confirm(title, message):
@@ -282,6 +288,4 @@ if __name__ == '__main__':
     main_app.configure(bg='lightblue')
     view = View(parent=main_app)
     view.pack(fill="both", expand=True, padx=5, pady=5)
-    view.bind_all("<Control-o>", lambda e: view.ask_open_filename())
-    view.bind_all("<Control-Alt-s>", lambda e: view.ask_save_as_filename())
     main_app.mainloop()
