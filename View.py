@@ -172,10 +172,13 @@ class View(ttk.Frame):
         self.winfo_toplevel().configure(menu=menubar)
 
         self.file_menu = tk.Menu(menubar, tearoff=0)
-        self.file_menu.add_command(label='Öffnen', accelerator="STRG+O", underline=1, command=self.ask_open_filename)
-        self.file_menu.add_command(label='Speichern', accelerator="STRG+S", underline=0, state='disabled')
-        self.file_menu.add_command(label='Speichern unter...', accelerator="STRG+ALT+S",
+        self.file_menu.add_command(label='Öffnen', accelerator="Strg+O", underline=1, command=self.ask_open_filename)
+        self.file_menu.add_command(label='Importieren aus Excel', accelerator="Strg+I", underline=0, state='disabled')
+        self.file_menu.add_command(label='Speichern', accelerator="Strg+S", underline=0, state='disabled')
+        self.file_menu.add_command(label='Speichern unter...', accelerator="Strg+Alt+S",
                                    underline=10, command=self.ask_save_as_filename)
+        self.file_menu.add_command(label='Exportieren nach Excel', accelerator="Strg+E",
+                                   underline=0, state='disabled')
         self.file_menu.add_separator()
         self.file_menu.add_command(label='Beenden', underline=0, command=self.winfo_toplevel().destroy)
         menubar.add_cascade(label='Datei', underline=0, menu=self.file_menu)
@@ -257,10 +260,9 @@ class View(ttk.Frame):
         self.update_idletasks()
         return
 
-
     @staticmethod
-    def ask_save_as_filename():
-        return filedialog.asksaveasfilename(title="Daten speichern unter")
+    def ask_save_as_filename(title):
+        return filedialog.asksaveasfilename(title=title)
 
     @staticmethod
     def ask_open_filename():

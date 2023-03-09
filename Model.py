@@ -1,5 +1,7 @@
 from openpyxl import load_workbook
 import csv
+from datetime import datetime
+import xlsxwriter
 
 
 class Model:
@@ -65,6 +67,7 @@ class Model:
                               'P-Sätze': None,
                               'Link SDB': None,
                               'Link GESTIS': None,
+                              'Letzte Aktualisierung': None,
                               }
 
                     for position, entry in enumerate(row):
@@ -73,7 +76,7 @@ class Model:
                     db.update({index: row_db})
         return db
 
-    def save_csv_file(self, filename: str, dialect=csv.excel):
+    def save_as_csv_file(self, filename: str, dialect=csv.excel):
         print()
         with open(filename, 'w', newline='', encoding='utf-16') as csvfile:
             writer = csv.writer(csvfile, dialect=dialect, delimiter=';')
@@ -84,7 +87,40 @@ class Model:
                 for feature in self.database[key]:
                     text.append(self.database[key][feature])
                 writer.writerow(text)
-        print(f"{__name__}:      Datei '{filename}' gespeichert.\n")
+        print(f"{__name__}:      {datetime.now().strftime('%d.%m.%Y %H:%M:%S')} CSV-Datei '{filename}' wurde "
+              f"gespeichert.\n")
+        return
+
+    def export_as_excel_file(self, filename: str):
+        print()
+        # Create workbook
+        workbook = xlsxwriter.Workbook(filename)
+        header_cell_format = workbook.add_format({'bg_color': r'#d4ddcf', 'font_size': 12, 'bottom': True})
+        integer_format = workbook.add_format()
+        integer_format.set_num_format('0; [Red] (-0); [Magenta] 0')
+
+        worksheet = workbook.add_worksheet("Inventur Biochemie 2023")
+        worksheet.freeze_panes(1, 2)
+        worksheet.set_zoom(100)
+        worksheet.set_column(0, 0, 5)
+        worksheet.set_column("B:Y", 25)
+        worksheet.autofilter(0, 0, len(self.database), len(self.column_names))
+
+        row = 0
+        col = 0
+        for item in self.column_names:
+            worksheet.write(row, col, item, header_cell_format)
+            col += 1
+
+        for key in self.database:
+            row += 1
+            col = 0
+            for feature in self.database[key]:
+                worksheet.write(row, col, self.database[key][feature])
+                col += 1
+
+        workbook.close()
+        print(f"{__name__}:      {datetime.now().strftime('%d.%m.%Y %H:%M:%S')} Excel-Datei '{filename}' wurde gespeichert.\n")
         return
 
     def get_data_from_csv_file(self, filename: str,
@@ -113,8 +149,12 @@ class Model:
                 for index, key in enumerate(row):
                     # use value as primary key
                     if key == self.primary_key:
-                        prim_key = row[key]
-                        # continue
+                        try:
+                            prim_key = int(row[key])
+                        except ValueError:
+                            prim_key = row(key)
+                        tmp.update({key: prim_key})
+                        continue
                     tmp.update({key: row[key]})
                     # Create entry in dictionary
                 # only if 'Name' is empty:

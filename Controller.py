@@ -9,7 +9,6 @@ class Controller:
         self.model = model
         self.view = view
 
-        self.filename = None
         self.category = None
         self.subcategory = None
         self.keys_to_display_list = []
@@ -18,9 +17,11 @@ class Controller:
 
         # View specific settings
         self.view.file_menu.entryconfig(0, command=self.open_csv_file)
-        self.view.file_menu.entryconfig(1, command=self.save_file, state='disabled')
-        self.view.file_menu.entryconfig(2, command=self.save_as_new_file, state='disabled')
-        self.view.file_menu.entryconfig(4, command=self.quit_program)
+        self.view.file_menu.entryconfig(1, command=None, state='disabled')  # import from excel
+        self.view.file_menu.entryconfig(2, command=self.save_file, state='disabled')
+        self.view.file_menu.entryconfig(3, command=self.save_as_new_file, state='disabled')
+        self.view.file_menu.entryconfig(4, command=self.export_as_excel_file, state='disabled')
+        self.view.file_menu.entryconfig(6, command=self.quit_program)
         self.parent.protocol("WM_DELETE_WINDOW", self.quit_program)
         self.view.bind_all("<Control-o>", lambda e: self.open_csv_file())
 
@@ -39,11 +40,15 @@ class Controller:
         # Show prepared GUI
         self.view.pack(fill="both", expand=True, padx=5, pady=5)
 
-        # Update Menubar, 1='Save', 2='Save as' with Short-Cuts
-        self.view.file_menu.entryconfig(1, state='normal')
-        self.view.bind_all("<Control-s>", lambda e: self.save_file())
+        # Update Menubar, 1='Import from Excel', 2='Save', 3='Save as', 4='Export to Excel' with Short-Cuts
+        self.view.file_menu.entryconfig(1, state='disabled')
+        self.view.bind_all("<Control-i>", None)
         self.view.file_menu.entryconfig(2, state='normal')
+        self.view.bind_all("<Control-s>", lambda e: self.save_file())
+        self.view.file_menu.entryconfig(3, state='normal')
         self.view.bind_all("<Control-Alt-s>", lambda e: self.save_as_new_file())
+        self.view.file_menu.entryconfig(4, state='normal')
+        self.view.bind_all("<Control-e>", lambda e: self.export_as_excel_file())
 
         # Get a list with all primary keys
         self.keys_to_display_list = [key for key in self.model.database]
@@ -165,22 +170,6 @@ class Controller:
                 self.model.database[self.actual_key][column] = temp
         return
 
-    def save_as_new_file(self):
-        self.save_fields()
-        save_filename = self.view.ask_save_as_filename()
-        if save_filename != "":
-            self.model.save_csv_file(save_filename, self.model.database)
-            self.data_changed = False
-        return
-
-    def save_file(self):
-        self.save_fields()
-        if not self.data_changed:
-            return
-        self.model.save_csv_file(self.model.filename, self.model.database)
-        self.data_changed = False
-        return
-
     def open_csv_file(self):
         if self.data_changed:
             if not self.view.ask_confirm('Ungespeicherte Daten',
@@ -205,6 +194,32 @@ class Controller:
                                               delimiter=self.view.chosen_delimiter.get(),
                                               encoding=self.view.chosen_encoding.get())
             self.set_view()
+        return
+
+    def save_file(self):
+        self.save_fields()
+        if not self.data_changed:
+            return
+        self.model.save_as_csv_file(self.model.filename, self.model.database)
+        self.data_changed = False
+        return
+
+    def save_as_new_file(self):
+        self.save_fields()
+        save_filename = self.view.ask_save_as_filename("Daten speichern als neue CSV-Datei unter")
+        if save_filename != "":
+            self.model.save_as_csv_file(save_filename)
+            self.data_changed = False
+            # Programm ändert Namen der aktuellen Datei auf den gewählten Speichernamen
+            self.model.filename = save_filename
+            self.parent.title(f'{PROGRAM} (Version {VERSION}) {self.model.filename}')
+        return
+
+    def export_as_excel_file(self):
+        self.save_fields()
+        save_filename = self.view.ask_save_as_filename("Daten exportieren als Excel-Datei unter")
+        if save_filename != "":
+            self.model.export_as_excel_file(save_filename)
         return
 
     def quit_program(self):
