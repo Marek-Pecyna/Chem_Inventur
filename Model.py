@@ -22,11 +22,10 @@ class Model:
         print(f'{__name__}:      Model wurde initialisiert.')
         return
 
-    def import_excel_file(self, filename: str):
+    def import_excel_file(self, filename: str, sheet_name: str = None):
         """
         From an Excel file (from old stock-taking ("Inventur"))
-        list of sheets will be processed
-        :param filename:
+        if no sheet_name is given, active sheet will be processed
         """
         print(f"\n{__name__}:      Analyse Excel-Datei begonnen.")
         self.filename = filename
@@ -34,59 +33,66 @@ class Model:
         wb = load_workbook(filename)
         header = []
         db = {}  # dictionary with all data, keys = consecutive number
-        worksheet_list = []
-        for name in wb.sheetnames:
-            worksheet_list.append(name)
 
-        for sheet in worksheet_list:
-            actual_sheet = wb[sheet]
-            print(actual_sheet)
-            data = list(actual_sheet.iter_rows(values_only=True))  # read in
-            print(f"   \u2022 {len(data)} Einträge mit Header")
+        if sheet_name:
+            actual_sheet = wb[sheet_name]
+        else:
+            actual_sheet = wb[wb.active.title]
 
-            for index, row in enumerate(data):
-                if index == 0:  # analysis of header
-                    print("   \u2022 Header enthält folgende Spalten: ",
-                          end="")
-                    for entry in row:
+        print(f"   \u2022 Arbeitsblatt '{actual_sheet}' wird bearbeitet")
+        data = list(actual_sheet.iter_rows(values_only=True))  # read in
+        print(f"   \u2022 {len(data)} Einträge mit Header")
+
+        for index, row in enumerate(data):
+            if index == 0:  # analysis of header
+                print("   \u2022 Header enthält folgende Spalten: ",
+                      end="")
+                for entry in row:
+                    if entry:
                         header.append(entry)
-                        print(f"{entry}", end=",")
-                    print()
-                else:
-                    """
-                    row_db = {'Name': None,
-                              'Alternativer Name 1': None,
-                              'Alternativer Name 2': None,
-                              'Englischer Name': None,
-                              'Alter des Gebindes': None,
-                              'Reinheitsgrad': None,
-                              'Zustandsform': None,
-                              'Verwendungszweck': None,
-                              'Standort': None,
-                              'Summenformel': None,
-                              'CAS-Nummer': None,
-                              'Gebindegröße': None,
-                              'Restmenge': None,
-                              'Hersteller': None,
-                              'Bestellnummer': None,
-                              'Gefahrenklasse': None,
-                              'H-Sätze': None,
-                              'P-Sätze': None,
-                              'Link SDB': None,
-                              'Link GESTIS': None,
-                              'Letzte Aktualisierung': None,
-                              }
-                    """
-                    row_db = {}
-                    for position, entry in enumerate(row):
-                        # print(header[position])
-                        if entry:
-                            row_db.update({header[position]: entry})
-                        else:
-                            row_db.update({header[position]: ''})
-                    db.update({index: row_db})
+                    else:
+                        header.append('')
+                    print(f"{entry}", end=",")
+                print()
+            else:
+                """
+                row_db = {'Name': None,
+                          'Alternativer Name 1': None,
+                          'Alternativer Name 2': None,
+                          'Englischer Name': None,
+                          'Alter des Gebindes': None,
+                          'Reinheitsgrad': None,
+                          'Zustandsform': None,
+                          'Verwendungszweck': None,
+                          'Standort': None,
+                          'Summenformel': None,
+                          'CAS-Nummer': None,
+                          'Gebindegröße': None,
+                          'Restmenge': None,
+                          'Hersteller': None,
+                          'Bestellnummer': None,
+                          'Gefahrenklasse': None,
+                          'H-Sätze': None,
+                          'P-Sätze': None,
+                          'Link SDB': None,
+                          'Link GESTIS': None,
+                          'Letzte Aktualisierung': None,
+                          }
+                """
+                row_db = {}
+                for position, entry in enumerate(row):
+                    # print(header[position])
+                    if entry:
+                        row_db.update({header[position]: entry})
+                    else:
+                        row_db.update({header[position]: ''})
+                db.update({index: row_db})
         self.column_names = header
         self.database = db
+        for key in db:
+            print(key, db[key])
+            break
+
         print(f"{__name__}:      Analyse beendet.\n")
         return
 
